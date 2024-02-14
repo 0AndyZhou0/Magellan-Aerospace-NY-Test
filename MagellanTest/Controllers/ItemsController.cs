@@ -42,12 +42,12 @@ namespace MagellanTest.Controllers
 
             /*System.Diagnostics.Debug.WriteLine(String.Format("{0} {1} {2} {3} {4}", item.Id.ToString(), item.ItemName, item.ParentItem.ToString(), item.Cost.ToString(), item.ReqDate));*/
 
-            await using var command = dataSource.CreateCommand(String.Format("INSERT INTO item\r\nVALUES \r\n({0}, '{1}', {2}, {3}, '{4}')",
+            await using var cmd = dataSource.CreateCommand(String.Format("INSERT INTO item\r\nVALUES \r\n({0}, '{1}', {2}, {3}, '{4}')",
                 item.Id.ToString(), item.ItemName, item.ParentItem == null ? "NULL" : item.ParentItem.ToString(), item.Cost.ToString(), item.ReqDate));
 
             try
             {
-                await command.ExecuteNonQueryAsync();
+                await cmd.ExecuteNonQueryAsync();
                 return CreatedAtAction(nameof(GetItem), new { id = item.Id }, item);
             } catch (Exception ex)
             {
@@ -102,19 +102,27 @@ namespace MagellanTest.Controllers
             await using (var cmd = dataSource.CreateCommand(String.Format("SELECT Get_Total_Cost('{0}')", name)))
             await using (var reader = await cmd.ExecuteReaderAsync())
             {
-                if (reader.Read())
+                reader.Read();
+                if (reader.IsDBNull(0))
                 {
-                    if (reader.IsDBNull(0))
+                    await using (var command = dataSource.CreateCommand(String.Format("SELECT * \r\nFROM item \r\nWHERE item_name = '{0}'", name)))
+                    await using (var reader2 = await command.ExecuteReaderAsync())
                     {
-                        return BadRequest(String.Format("'{0}' doesn't exist or '{0}''s parent_item is not null", name));
-                    }
-                    var total = reader.GetInt32(0);
-                    /*System.Diagnostics.Debug.WriteLine(String.Format("{0}", total));*/
-                    return Ok(total);
-                }
-            }
+                        if (reader2.Read())
+                        {
 
-            return BadRequest(String.Format("'{0}' not found", name));
+                            return BadRequest(String.Format("'{0}''s parent_item is not null", name));
+                        } else
+                        {
+                            return BadRequest(String.Format("'{0}' doesn't exist", name));
+                        }
+                    }
+                        
+                }
+                var total = reader.GetInt32(0);
+                /*System.Diagnostics.Debug.WriteLine(String.Format("{0}", total));*/
+                return Ok(total);
+            }
 
         }
     }
