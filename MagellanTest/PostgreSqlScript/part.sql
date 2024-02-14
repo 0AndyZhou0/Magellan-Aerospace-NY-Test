@@ -1,6 +1,7 @@
 CREATE DATABASE "Part";
 
-\c "Part";
+-- Swap to Part Database
+-- \c "Part";
 
 CREATE TABLE item (
     id          int         NOT NULL    primary key,
