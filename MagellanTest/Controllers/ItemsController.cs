@@ -6,15 +6,15 @@ namespace MagellanTest.Controllers
 {
     public record Item
     {
-        public int Id { get; set; }
+        public int? Id { get; set; }
 
-        public string ItemName { get; set; } = string.Empty;
+        public string? ItemName { get; set; }
 
-        public int? ParentItem { get; set; } = null;
+        public int? ParentItem { get; set; }
 
-        public int Cost { get; set; }
+        public int? Cost { get; set; }
 
-        public string ReqDate { get; set; } = string.Empty;
+        public string? ReqDate { get; set; }
     }
 
     [ApiController]
@@ -29,6 +29,16 @@ namespace MagellanTest.Controllers
         {
             var connectionString = "Host=localhost;Username=postgres;Password=postgres;Database=Part";
             await using var dataSource = NpgsqlDataSource.Create(connectionString);
+
+            if (item.Id == null) {
+                return BadRequest("id cannot be null");
+            } else if (item.ItemName == null) {
+                return BadRequest("item name cannot be null");
+            } else if (item.Cost == null) {
+                return BadRequest("cost cannot be null");
+            } else if (item.ReqDate == null) {
+                return BadRequest("req date cannot be null");
+            }
 
             /*System.Diagnostics.Debug.WriteLine(String.Format("{0} {1} {2} {3} {4}", item.Id.ToString(), item.ItemName, item.ParentItem.ToString(), item.Cost.ToString(), item.ReqDate));*/
 
